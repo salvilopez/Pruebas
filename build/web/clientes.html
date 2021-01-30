@@ -1,0 +1,237 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>
+            Mantenimiento de Clientes
+        </title>
+
+        <style>
+            #bt   {width: 400px;
+
+                   left: 30%;
+            }
+            #fcli {display:none;
+                   width: 400px;
+                   float:left;
+                   position: absolute;
+                   left: 1%;
+            }
+            #listados {    left: 45%;
+                           position: absolute;
+            }
+            #divQs{
+                left: 45%;
+                top:2%;
+                width: 400px;
+                position: absolute; 
+            }    
+
+        </style>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="js/peticionesAJAX.js"></script>
+        <script>
+            window.onload = function () {
+
+
+                var botonAlta = document.getElementById("alta");
+                var formuAlta = document.getElementById("fcli");
+                var formularioboolean = false;
+                var provincias = [];
+                var municipios = [];
+                selectProvincia = document.getElementById("provincia");
+                selectMunicipios = document.getElementById("localidad");
+                var botonGuardar = document.getElementById("gcli");
+                var botonListar = document.getElementById("lista");
+
+                function cliente(nombre, apellidos, nif, edad, sexo, email, provincia, localidad) {
+                    this.nombre = nombre;
+                    this.apellidos = apellidos;
+                    this.nif = nif;
+                    this.edad = edad;
+                    this.nif = sexo;
+                    this.edad = email;
+                    this.provincia = provincia;
+                    this.localidad = localidad;
+                }
+
+                botonAlta.onclick = function () {
+
+                    if (formularioboolean) {
+                        document.getElementById("alta").value = "Alta (Alt+A)";
+                        formuAlta.style.display = "none";
+                        formularioboolean = false;
+
+
+                    } else {
+
+                        formuAlta.style.display = "block";
+                        formularioboolean = true;
+                        document.getElementById("alta").value = "Cerrar (Alt+)B";
+                    }
+
+                    var dat = {provincia: "provincia"};
+                    $.ajax({url: "BuscaPoblaciones",
+                        method: "GET",
+                        data: dat,
+                        success: function (result) {
+                            provincias = Object.values(result)
+
+                            for (var i = 0; i < provincias.length - 1; i++) {
+                                selectProvincia[i] = new Option(provincias[i], i);
+                            }
+                        }});
+                };
+
+                selectProvincia.onchange = function () {
+                    document.getElementById("localidad").disabled = false;
+                    provinciaSeleccionada = document.getElementById("provincia").value;
+                    console.log(provinciaSeleccionada);
+                    var dat = {provincia: provinciaSeleccionada};
+                    $.ajax({url: "BuscaPoblaciones",
+                        method: "GET",
+                        data: dat,
+                        success: function (result) {
+
+                            municipios = Object.values(result);
+                            console.log(municipios.length);
+                            for (var i = 0; i < municipios.length; i++) {
+                                selectMunicipios[i] = new Option(municipios[i], municipios[i]);
+                                console.log(municipios[i]);
+                            }
+                        }});
+                };
+
+                botonGuardar.onclick = function () {
+                    //    (nombreUsuario, apellidos, nif, edad, sexo, email, provincia, localidad)
+                    nuevoNombreUsu = document.getElementById("nomcli").value;
+                    nuevoApellidos = document.getElementById("apecli").value;
+                    nuevoNif = document.getElementById("nifcli").value;
+                    nuevoEdad = document.getElementById("edcli").value;
+                    nuevoSexo = document.getElementsByName("sexo");
+                    var sexoSeleccionado;
+                    for (i = 0; i < nuevoSexo.length; i++) {
+                        if (nuevoSexo[i].checked) {
+                            sexoSeleccionado = nuevoSexo[i].checked;
+                        }
+                    }
+                    nuevoEmail = document.getElementById("mail").value;
+                    nuevoProvincia = document.getElementById("provincia").value;
+                    nuevoLocalidad = document.getElementById("localidad").value;
+                    clienteNuevo = new cliente(nuevoNombreUsu, nuevoApellidos, nuevoNif, nuevoEdad, sexoSeleccionado, nuevoEmail, nuevoProvincia, nuevoLocalidad);
+                    clienteString = JSON.stringify(clienteNuevo);
+                    alert(clienteString);
+                    var dat = {cliente: clienteString};
+                    $.ajax({url: "GuardaC",
+                        method: "GET",
+                        data: dat,
+                        success: function (result) {
+                            alert(result);
+                        }});
+                };
+                botonListar.onclick = function (event) {
+                    event.preventDefault;
+                    $.ajax({url: "RecuperaC",
+                        method: "GET",
+                        success: function (result) {
+                           tabla2("Lista de Clientes","qs",result,true);
+                        }});
+
+
+                };
+
+
+            }//onload................
+
+
+
+
+
+
+
+
+
+            //---------------------------------------------------
+            function altacli() {
+                document.getElementById("fcli").style.display =
+                        (document.getElementById("fcli").style.display == 'none') ? 'block' : 'none';
+            }
+
+            //---------------------------------------------------------------
+
+
+        </script>
+    </head>
+    <body>
+        <form id="bt">
+            <fieldset><legend>Mantenimiento de Clientes...</legend>
+                <input type="button" value="Alta (Alt+A)" id="alta" onClick="altacli()"/>
+                <fieldset><legend>Listados de Clientes...</legend>
+                    <input type="button" value="Listar (Alt+L)" id="lista"/><br>
+                    Mujeres   :<input type="radio" name="lc" id="listP" checked value="M">
+                    Hombres   :<input type="radio" name="lc" id="listN" value="H">
+                    Todos     :<input type="radio" name="lc" id="listN" value="T" checked>
+
+                </fieldset>
+                <fieldset><legend>Datos a guardar en...</legend>
+                    JSON   :<input type="radio" name="td" checked value="JSON" >
+                    Query String   :<input type="radio" name="td" value="?">
+                </fieldset>
+            </fieldset>
+        </form>
+
+        <div id="divQs">
+            <fieldset ><legend>Query String / JSON</legend>
+                <strong id="qs"></strong>
+            </fieldset>
+        </div>    
+
+
+        <footer>
+            <hr>
+            <!-- formulario de alta -------------------------------------------------------->
+            <div id="fcli" style="display:none">
+                <form id="frmcli">
+                    <fieldset><legend>Formulario Alta de Clientes...</legend>
+                        <div>
+                            <p>Nombre.....:<input type="text" id="nomcli" placeholder="Nombre?" name="nombre"
+                                                  title="Mayuscula + 3 car" /></p>
+                            <!--em id="emN">El campo Nombre es obligatorio...</em-->
+                            <p>Apellidos:<input type="text" id="apecli" placeholder="Apellidos?" name="apellidos" 
+                                                title="2 Apellidos distintos, enpiezan May, min 3 car"/></p>
+                            <p> <br />
+                                Nif:<input type="text" id="nifcli" placeholder="Nif" name ="nif" 
+                                           title="8 numeros y una letra"/></p>
+                            <p>Edad.........:<input type="text" id="edcli" placeholder="Edad?" name="edad" 
+                                                    title="Uno o dos difgitos" /></p>
+                            <p>Sexo......:<input type="radio" value="H"  placeholder="Sexo?" name="sexo"/>Hombre
+                                <input type="radio" value="M"  placeholder="Curso?" name="sexo"/>Mujer
+                            </p>
+                            <!--p>Teléfono.........:<input type="text" id="tlfcli" placeholder="Nif?" name ="Tlf"/></p-->
+                            <p>Email.......:<input type="text" id="mail" placeholder="Email?" name ="email" 
+                                                   title="empieza letra, minimo 3 car y @ 3car . y 2 o 3 car ext; empieza letra May"/></p>       
+
+                            <select  name="provincia" id="provincia">
+                                <option value=0>ELIJA UNA PROVINCIA</option>      </select>
+
+                            <select name="localidad" id="localidad" disabled >
+                                <option value=0>TODAS LAS POBLACIONES</option>     </select>
+
+
+                            <input type="submit" value="Guardar (Ctrl+G)" id="gcli"  />
+                            <input type="reset" value="Cancelar (Ctrl+C)" id="ccli" />
+                            <br />
+                        </div>   
+                    </fieldset>  
+                </form> 
+
+
+
+            </div>
+            <div id="listados">
+            </div>
+            <!-- formulario de alta -------------------------------------------------------->  
+        </footer>  
+
+    </body>
+</html>
